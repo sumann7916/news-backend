@@ -1,33 +1,37 @@
-from app.database import Base
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Uuid, text
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from django.db import models
 
 
-class NewsCreator(Base):
-    __tablename__ = "news_creator"
+class NewsCreator(models.Model):
+    name = models.CharField(max_length=100)
+    url = models.CharField(max_length=100, unique=True)  # Ensuring uniqueness
 
-    id = Column(UUID, primary_key=True, server_default=text("gen_random_uuid()"))
-    name = Column(String, unique=True, index=True)
-    url = Column(String, unique=True, index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    news = relationship("News", back_populates="creator")
-
-
-class NewsCategory(Base):
-    __tablename__ = "news_category"
-
-    id = Column(UUID, primary_key=True, server_default=text("gen_random_uuid()"))
-    name = Column(String, unique=True, index=True)
+    def __str__(self):
+        return self.name
 
 
-class News(Base):
-    __tablename__ = "news"
+class NewsCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)  # Ensuring uniqueness
 
-    id = Column(UUID, primary_key=True, server_default=text("gen_random_uuid()"))
-    title = Column(String, index=True)
-    summary = Column(String)
-    link = Column(String)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    creator_id = Column(UUID, ForeignKey("news_creator.id"))
-    creator = relationship("NewsCreator", back_populates="news")
+    def __str__(self):
+        return self.name
+
+
+class News(models.Model):
+    title = models.CharField(max_length=100)
+    summary = models.TextField()
+    original_link = models.URLField(max_length=200)
+
+    creator = models.ForeignKey(NewsCreator, on_delete=models.CASCADE)
+    categories = models.ManyToManyField(NewsCategory, related_name="news")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.title
