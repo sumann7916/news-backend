@@ -6,7 +6,7 @@ from heapq import nlargest
 
 def summarize(text):
     nlp = spacy.load("en_core_web_sm")
-    doc = nlp(text)  # Changed from document to doc
+    doc = nlp(text)
 
     # Extract tokens, excluding stop words and punctuation
     tokens = [
@@ -23,9 +23,12 @@ def summarize(text):
         else:
             word_frequencies[word] += 1
 
-    # Extract sentences and calculate scores
+    # Extract sentences and convert generator to list
+    sentences = list(doc.sents)
+
+    # Calculate scores for each sentence
     sentence_scores = {}
-    for sentence in doc.sents:
+    for sentence in sentences:
         for word in sentence:
             if word.text.lower() in word_frequencies:
                 if sentence not in sentence_scores:
@@ -36,7 +39,7 @@ def summarize(text):
     # Ratio for summarization
     ratio = 0.1
     select_length = max(
-        1, int(len(doc.sents) * ratio)
+        1, int(len(sentences) * ratio)
     )  # Ensure at least one sentence is selected
 
     # Select the top sentences based on their scores

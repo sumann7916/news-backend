@@ -13,7 +13,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-VALID_TIME = 3  # 1 hour
+VALID_TIME = 24  # 1 hour
 NPT = pytz.timezone("Asia/Kathmandu")
 
 
@@ -21,6 +21,7 @@ class MyRepublicaScraper(BaseScraper):
     name = "My Republica"
     base_url = NewsCreator.objects.get(name=name).url
     categories_to_scrap = ["politics", "sports", "society"]
+    creator = NewsCreator.objects.get(name=name)
 
     def scrap(self) -> None:
         """Main function to scrape categories and print article details."""
@@ -69,18 +70,18 @@ class MyRepublicaScraper(BaseScraper):
         published_at: datetime,
     ) -> None:
         try:
-            category = NewsCategory.objects.get_or_create(name=categoryName).first()
-            creator = NewsCreator.objects.get(name=self.name).first()
+            category = NewsCategory.objects.get(name=categoryName)
             summary = summarize(content)
-            News.objects.create(
+            news = News(
                 title=title,
                 summary=summary,
+                category=category,
+                creator=self.creator,
                 original_link=original_link,
                 image_link=image_link,
-                creator=creator,
-                categories=category,
                 published_at=published_at,
             )
+            news.save()
         except Exception as e:
             logging.error(f"Error saving to database: {e}")
             print(f"Error saving to database: {e}")
@@ -171,7 +172,7 @@ class MyRepublicaScraper(BaseScraper):
             else "No Image"
         )
         main_heading = (
-            full_soup.select_one(".main-heading").text.strip()
+            full_soup.select_one("div.main-heading h2").text.strip()
             if full_soup.select_one(".main-heading")
             else "No Main Heading"
         )
