@@ -20,11 +20,10 @@ NPT = pytz.timezone("Asia/Kathmandu")
 class MyRepublicaScraper(BaseScraper):
     name = "My Republica"
     base_url = NewsCreator.objects.get(name=name).url
-    categories_to_scrap = ["politics", "sports", "society"]
+    categories_to_scrap = ["politics", "sports", "society", "economy", "lifestyle"]
     creator = NewsCreator.objects.get(name=name)
 
     def scrap(self) -> None:
-        """Main function to scrape categories and print article details."""
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
         }
@@ -70,7 +69,8 @@ class MyRepublicaScraper(BaseScraper):
         published_at: datetime,
     ) -> None:
         try:
-            category = NewsCategory.objects.get(name=categoryName)
+
+            category = NewsCategory.objects.get_or_create(name=categoryName.lower())[0]
             summary = summarize(content)
             news = News(
                 title=title,
@@ -99,7 +99,7 @@ class MyRepublicaScraper(BaseScraper):
         date_format = "%B %d, %Y %I:%M %p"
         try:
             dt = datetime.strptime(date_str, date_format)
-            return NPT.localize(dt)  # Localize to NPT
+            return NPT.localize(dt)
         except ValueError as e:
             logging.error(f"Error parsing date: {e}")
             return None
@@ -107,7 +107,6 @@ class MyRepublicaScraper(BaseScraper):
     def check_if_valid_time(self, published_time):
         now = datetime.now(NPT)
         logging.info(f"Published Time: {published_time}")
-        # Calculate the time difference in hours
         time_diff = (now - published_time).total_seconds() / 3600
         logging.info(f"Time Difference (hours): {time_diff}")
         return time_diff <= VALID_TIME
@@ -127,7 +126,6 @@ class MyRepublicaScraper(BaseScraper):
         return None
 
     def extract_articles(self, soup):
-        """Extract article links and their publication times from the soup."""
         articles = []
         if soup:
             for article in soup.select(".categories-list-info div"):
@@ -146,7 +144,6 @@ class MyRepublicaScraper(BaseScraper):
         return articles
 
     def scrape_full_article(self, link: str, headers: dict):
-        """Scrape the full article content from the link."""
         try:
             full_article_response = requests.get(link, headers=headers)
             if full_article_response.status_code == 200:
@@ -160,7 +157,6 @@ class MyRepublicaScraper(BaseScraper):
         return None
 
     def extract_article_details(self, full_soup):
-        """Extract details from the full article soup."""
         content = (
             full_soup.select_one(".news-content").get_text(strip=True)
             if full_soup.select_one(".news-content")
