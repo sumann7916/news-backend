@@ -27,10 +27,10 @@ class NewsCategory(models.Model):
 
 class News(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title: str = models.CharField(max_length=100)
+    title: str = models.TextField()
     summary = models.TextField()
-    original_link = models.URLField(max_length=200)
-    image_link = models.URLField(max_length=200)
+    original_link = models.URLField(max_length=300, unique=True)  # Ensuring uniqueness
+    image_link = models.URLField(max_length=300)
 
     creator = models.ForeignKey(NewsCreator, on_delete=models.CASCADE)
     category = models.ForeignKey(NewsCategory, on_delete=models.CASCADE)

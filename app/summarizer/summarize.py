@@ -4,46 +4,43 @@ from spacy.lang.en.stop_words import STOP_WORDS
 from heapq import nlargest
 
 
-def summarize(text):
+def summarize(text, max_words=50):
     nlp = spacy.load("en_core_web_sm")
-    doc = nlp(text)  # Changed from document to doc
+    doc = nlp(text)
 
-    # Extract tokens, excluding stop words and punctuation
     tokens = [
         token.text.lower()
         for token in doc
         if token.text.lower() not in STOP_WORDS and token.text not in punctuation
     ]
 
-    # Calculate word frequencies
     word_frequencies = {}
     for word in tokens:
-        if word not in word_frequencies:
-            word_frequencies[word] = 1
-        else:
-            word_frequencies[word] += 1
+        word_frequencies[word] = word_frequencies.get(word, 0) + 1
 
-    # Extract sentences and calculate scores
+    sentences = list(doc.sents)
+
     sentence_scores = {}
-    for sentence in doc.sents:
+    for sentence in sentences:
         for word in sentence:
             if word.text.lower() in word_frequencies:
-                if sentence not in sentence_scores:
-                    sentence_scores[sentence] = word_frequencies[word.text.lower()]
-                else:
-                    sentence_scores[sentence] += word_frequencies[word.text.lower()]
+                sentence_scores[sentence] = (
+                    sentence_scores.get(sentence, 0)
+                    + word_frequencies[word.text.lower()]
+                )
 
-    # Ratio for summarization
-    ratio = 0.1
-    select_length = max(
-        1, int(len(doc.sents) * ratio)
-    )  # Ensure at least one sentence is selected
+    summary_sentences = []
+    total_words = 0
 
-    # Select the top sentences based on their scores
-    summary_sentences = nlargest(
-        select_length, sentence_scores, key=sentence_scores.get
-    )
+    for sentence in nlargest(
+        len(sentence_scores), sentence_scores, key=sentence_scores.get
+    ):
+        sentence_word_count = len(sentence.text.split())
+        if total_words + sentence_word_count > max_words:
+            continue
+        summary_sentences.append(sentence.text)
+        total_words += sentence_word_count
+        if total_words >= max_words:
+            break
 
-    # Create the final summary by joining the selected sentences
-    final_summary = [sentence.text for sentence in summary_sentences]
-    return " ".join(final_summary)
+    return " ".join(summary_sentences)
