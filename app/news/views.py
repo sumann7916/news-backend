@@ -1,27 +1,23 @@
-from rest_framework import viewsets
-from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework import generics
 from .models import NewsCategory, News
 from .serializers import NewsCategorySerializer, NewsSerializer
-import logging
 
 
-class NewsCategoryViewSet(viewsets.ReadOnlyModelViewSet):
+# API for fetching all categories
+class NewsCategoryList(generics.ListAPIView):
     queryset = NewsCategory.objects.all()
     serializer_class = NewsCategorySerializer
 
-    @action(detail=True, methods=["get"], url_path="news")
-    def get_news(self, request, pk=None):
-        try:
-            category = self.get_object()
-            news = News.objects.filter(category=category)
-            serializer = NewsSerializer(news, many=True)
-            return Response(serializer.data)
-        except NewsCategory.DoesNotExist:
-            logging.error("Category not found.")
-            return Response({"error": "Category not found"}, status=404)
-        except Exception as e:
-            logging.error(f"An error occurred: {e}")
-            return Response(
-                {"error": "An error occurred while fetching news."}, status=500
-            )
+
+# API for fetching all news in a specific category
+class NewsByCategoryList(generics.ListAPIView):
+    serializer_class = NewsSerializer
+
+    def get_queryset(self):
+        category_id = self.kwargs["category_id"]
+        return News.objects.filter(category_id=category_id)
+
+
+class LatestNewsView(generics.ListAPIView):
+    queryset = News.objects.order_by("-created_at")[:10]
+    serializer_class = NewsSerializer
