@@ -1,10 +1,13 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import NewsCategoryViewSet
+from django.urls import path
+from .views import NewsCategoryList, NewsByCategoryList, LatestNewsView
 
-router = DefaultRouter()
-router.register(r"categories", NewsCategoryViewSet, basename="newscategory")
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path("categories/", NewsCategoryList.as_view(), name="news-category-list"),
+    path(
+        "categories/<uuid:category_id>/news/",
+        NewsByCategoryList.as_view(),
+        name="news-by-category",
+    ),
+    path("latest/", LatestNewsView.as_view(), name="latest-news"),
 ]

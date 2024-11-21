@@ -1,20 +1,23 @@
 from rest_framework import serializers
-from .models import News, NewsCategory, NewsCreator
+from .models import NewsCreator, NewsCategory, News
 
 
-class NewsSerializer(serializers.HyperlinkedModelSerializer):
+class NewsCreatorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = News
+        model = NewsCreator
         fields = "__all__"
 
 
-class NewsCategorySerializer(serializers.HyperlinkedModelSerializer):
+class NewsCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = NewsCategory
         fields = "__all__"
 
 
-class NewsCreatorSerializer(serializers.HyperlinkedModelSerializer):
+class NewsSerializer(serializers.ModelSerializer):
+    creator = NewsCreatorSerializer()
+    category = NewsCategorySerializer()
+
     class Meta:
-        model = NewsCreator
+        model = News
         fields = "__all__"
